@@ -54,6 +54,19 @@ void PrintPaths(char array[][5], int num){
         }
     }
 };
+int VillageCoordinate(char array[][5], int village[20], int num){
+    int curr =0;
+    for(int i=0; i<5;i++){
+        for(int j=0; j<5;j++){
+            if(array[i][j] == 'V'){
+                village[curr] = i;
+                village[curr+1] = j;
+                curr+=2;
+            }
+        }
+    }
+    return curr;
+};
 int main()
 {
     int n=5, m=5;
@@ -67,19 +80,11 @@ int main()
     GenerateRandom(array, 5);
     printFunc(array, 5);
     PrintPaths(array, 5); // print the possible ways in through the villages
-
-    int temp[20], curr=0; // temporary array will store the x and y cordinates that has V value
-    for(int i=0; i<5;i++){
-        for(int j=0; j<5;j++){
-            if(array[i][j] == 'V'){
-                temp[curr] = i;
-                temp[curr+1] = j;
-                curr+=2;
-            }
-        }
-    }
+    int VillageCordinateArray[20];// temporary array will store the x and y cordinates that has V value
+    // finding the villages coordinates
+    int curr = VillageCoordinate(array, VillageCordinateArray, n);
     printf("\n");
     for(int i=0; i<curr;i+=2){
-        printf("x-axis:%d  y-axis:%d\n", temp[i], temp[i+1]);
+        printf("x-axis:%d  y-axis:%d\n", VillageCordinateArray[i], VillageCordinateArray[i+1]);
     }
 }
