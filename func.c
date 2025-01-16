@@ -5,20 +5,30 @@
 #include <string.h>
 #include "header.h"
 
-void AssigningValue(char **map, int row, int col) {
+void AssigningValue(char **map) {
     int k1, k2;
     printf("Enter the coordinates of kingdom one and two: ");
     scanf("%d %d", &k1, &k2);
-    map[k1][k2] = 'C';
+    if(k1 >= row || k2 >=col){ 
+        printf("%sInvalid input%s!!!\n%sPROGRAM END.\n%s", red, reset, red, reset);
+        exit (0);
+    }else map[k1][k2] = 'F';
+    
     scanf("%d %d", &k1, &k2);
-    map[k1][k2] = 'C';
-
-    printf("How many villages are there: ");
+    if(k1 >= row || k2 >=col){ 
+        printf("%sInvalid input!!!%s\n%sPROGRAM END.\n%s", red, reset, red, reset);
+        exit (0);
+    }else map[k1][k2] = 'S';
+    printf("How many S_Village_flage are there: ");
     int VN;
     scanf("%d", &VN);
     for (int i = 0; i < VN; i++) {
         int v1, v2;
         scanf("%d %d", &v1, &v2);
+        if(v1 >= row || v2 >= col){
+            printf("%sInvalid input!!!%s\n%sPROGRAM END.\n%s", red, reset, red, reset);
+            exit(0);
+        }
         map[v1][v2] = 'V';
     }
 
@@ -28,12 +38,15 @@ void AssigningValue(char **map, int row, int col) {
     for (int i = 0; i < XN; i++) {
         int x1, x2;
         scanf("%d %d", &x1, &x2);
+        if(x1 >= row || x2 >= col){
+            printf("%sInvalid input!!!%s\n%sPROGRAM END.\n%s", red, reset, red, reset);
+            exit(0);
+        }
         map[x1][x2] = 'X';
     }
-
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < col; j++) {
-            if (map[i][j] != 'X' && map[i][j] != 'V' && map[i][j] != 'C') map[i][j] = '1';
+            if (map[i][j] != 'X' && map[i][j] != 'V' && map[i][j] != 'F' && map[i][j] != 'S') map[i][j] = '1';
         }
     }
 }
@@ -58,14 +71,14 @@ void printBanner(const char* title) {
     printf("===========================================%s\n\n", reset);
 }
 
-void printFunc(char **array, int row,int col) {
+void printFunc(char **array) {
     printBanner("GRID DISPLAY");
     for (int i = 0; i < row; i++) {
         printf("                  %s|%s", yellow, reset);
         for (int j = 0; j < col; j++) {
             if (array[i][j] == 'X') {
                 printf(Green" %c "brightGreen, array[i][j]);
-            } else if (array[i][j] == 'C') {
+            } else if (array[i][j] == 'F' || array[i][j] == 'S') {
                 printf(purple" %c "yellow, array[i][j]);
             } else if (array[i][j] == 'V') {
                 printf(blue" %c "reset, array[i][j]);
@@ -85,7 +98,6 @@ void printFunc(char **array, int row,int col) {
     }
     printf("\n\n");
 }
-
 void clrscr() {
     printf("\033[H\033[J"); // Move to the top-left corner and clear the entire screen
 }
@@ -96,18 +108,18 @@ void info(struct player* func_Players){
     scanf("%lf %lf %d %d", &func_Players[0].Gold, &func_Players[0].Food, &func_Players[0].employees, &func_Players[0].Soldier);
     func_Players[1] = func_Players[0];
 }
-void Game_init(struct player* players, char **array){
+void Game_init(struct player* players, char **array, int village[], int villageNum){
     int turn =0;
     screen_clear;
     print_map;
     int round =0, SW=1;
     while(true){
         // the user one turn
-        int temp = turn;
+        int player = turn;
         int choose;
         // screen_clear;
         // printFunc(array, row, col);
-        if(SW) printf("\n%sPlayer %d's Turn%s\n",purple, temp+1 , purple);
+        if(SW) printf("\n%sPlayer %d's Turn%s\n",purple, player+1 , purple);
         printf("%splease choose an action: %s\n", yellow, yellow);
         printf("%s1 : buying food\n2 : hiring employee\n3 : hiring soldiers\n4 : making paths: %s", white, brightBlue);
 
@@ -193,9 +205,10 @@ void Game_init(struct player* players, char **array){
         screen_clear;
         print_map;
         if(choose == 4){
+            char Athlete = (player == 0)?'F':'S';
             screen_clear;
             print_map;
-            printf("%snot implemented please enjoy playing with other characteristics!%s", yellow, purple);
+            FindPaths(array, village, village_num, Athlete);
             continue;
         }
         round++, SW++;
@@ -224,4 +237,165 @@ void add_resourse(struct player *players){
     players[0].Gold++;
     players[1].Food++;
     players[1].Gold++;
+}
+
+void FindPaths(char **array, int village[], int villageNum, char player) {
+    screen_clear;
+    print_map;
+    bool **visited = malloc(row * sizeof(bool *));
+    for (int i = 0; i < row; i++) {
+        visited[i] = calloc(col, sizeof(bool));
+    }
+    if(visited == NULL){
+        printf("Allocating memory for visited goes wrong! ");
+        exit (0);
+    }
+
+    bool *villageVisited = calloc(villageNum / 2, sizeof(bool));  // Track visited villages
+    if(villageVisited == NULL){
+        printf("Allocating memory for village visiting Failed!");
+        exit (0);
+    }
+    bool pathFound = false;  // Track if a valid path has been found for this player
+    path = (player == 'F') ? 0 : 1;  // Set path index for player (0 for player 1, 1 for player 2)
+
+    // Start search only from player's kingdom
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            if (array[i][j] == player) {
+                dfs(array, i, j, visited, village, villageNum, &pathFound, player, villageVisited);
+                if (pathFound) break;  // Stop after finding the first valid path
+            }
+        }
+        if (pathFound) break;  // Stop after finding the first valid path
+    }
+    printf("Searching paths completed for player %c\n", player);
+
+    for (int i = 0; i < row; i++) {
+        free(visited[i]);
+    }
+    free(visited);
+    free(villageVisited);
+}
+
+void dfs(char **array, int x, int y, bool **visited, int village[], int villageCount, bool *pathFound, char player, bool *villageVisited)
+{
+    //if (*pathFound) return;  // Stop if a valid path is already found
+
+    visited[x][y] = true;
+
+    // Check if the current cell is a village
+    for (int i = 0; i < villageCount; i += 2) {
+        if (x == village[i] && y == village[i + 1] && !villageVisited[i / 2]) {
+            // Village found, print path details
+            path++;
+            printf("Path found for %c at (%d, %d) with total hard value %d\n", player, x, y, HardValue[path]);
+            villageVisited[i / 2] = true;  // Mark village as visited
+            *pathFound = true;  // Mark path as found
+            visited[x][y] = false;  // Backtrack
+            return;
+        }
+    }
+    int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    for (int i = 0; i < 4; i++) {
+        int newX = x + directions[i][0];
+        int newY = y + directions[i][1];
+        // Check if this cell is a village
+        for (int j = 0; j < villageCount; j += 2) {
+            if (newX == village[j] && newY == village[j + 1]) {
+                *pathFound = true;  // Set path found flag
+                printf("Path found for %c at (%d, %d) with total hard value %d\n", player, newX, newY, HardValue[path]);
+                visited[x][y] = false;  // Backtrack
+                return;
+            }
+        }
+    }
+    int sign_move = 0;
+    int i, xMove, yMove;
+    char move_value = '5';
+
+    for (i = 0; i < 4; i++) {
+        int newX = x + directions[i][0];
+        int newY = y + directions[i][1];
+        // Check if the new position is valid
+        if (isValidMove(newX, newY, visited, array, player, village, villageVisited, villageCount)) {
+            sign_move = 1;
+            // printf("It was valid and I am here current x y and hard %d %d %c\n", newX, newY, array[newX][newY]);
+            // If the value at new position is less than the current best move_value
+            if (array[newX][newY] < move_value) {
+                //printf("%c %c array value and move_value\n", array[newX][newY], move_value);
+                move_value = array[newX][newY];  // Convert char to integer (e.g., '3' -> 3)
+                xMove = newX;
+                yMove = newY;
+            }
+        }
+    }
+    int number_move = move_value - '0';
+    if (sign_move) 
+    {
+        HardValue[path] += number_move;
+        
+        // printf("hard value and current: %d %d\n", HardValue[path], array[xMove][yMove]-'0');
+        //printf("%d hard_value\n", array[xMove,yMove]-'0');
+        printf(" (%d,%d)-->", xMove, yMove);  // Append to path
+
+        //if (*pathFound) return;  // Stop recursion if a path is found
+        // // Call dfs with new position
+        dfs(array, xMove, yMove, visited, village, villageCount, pathFound, player, villageVisited);
+    }
+        visited[x][y] = false;  // Backtrack
+}
+
+bool isValidMove(int x, int y, bool **visited, char **array, char player, int village[], bool *villageVisited, int villageCount) {
+    char enemy = (player == 'F') ? 'S' : 'F';
+
+    // Ensure the move is within bounds and valid
+    if (x < 0 || x >= row || y < 0 || y >= col || visited[x][y] || array[x][y] == 'X' || array[x][y] == enemy) {
+        return false;
+    }
+
+    // Check if the target cell is a previously visited village
+    for (int i = 0; i < villageCount; i += 2) {
+        if (x == village[i] && y == village[i + 1] && villageVisited[i / 2]) {
+            return false;  // Already visited village
+        }
+    }
+
+    return true;
+}
+void XVcoordinates(char **array, int *HomeCoordinateArray,int *VillageCoordinateArray,int *HomeAmount,int *VillageAmount){
+    // finding the Village Coordinates
+    int HomeCurr =0, VillageCurr=0;
+    for(int i=0; i<row;i++)
+    {
+        for(int j=0; j<col;j++)
+        {
+            if(array[i][j] == 'V')
+            {
+                *(VillageCoordinateArray + VillageCurr) = i;
+                *(VillageCoordinateArray + VillageCurr+1) = j;
+                F_Village_flage[VillageCurr] = i;
+                F_Village_flage[VillageCurr+1] = j;
+                S_Village_flage[VillageCurr] = i;
+                S_Village_flage[VillageCurr+1] = j;
+                VillageCurr+=2;
+                // printf("%d", *VillageAmount);
+            }
+        }
+    }
+    for(int i=0; i<row;i++)
+    {
+        for(int j=0; j<col;j++)
+        {
+            if(array[i][j] == 'X')
+            {
+                *(HomeCoordinateArray +HomeCurr) = i;
+                *(HomeCoordinateArray +HomeCurr+1) = j;
+                HomeCurr+=2;
+            }
+        }
+    }
+    *VillageAmount = VillageCurr;
+    village_num = VillageCurr;
+    *HomeAmount = HomeCurr;
 }
