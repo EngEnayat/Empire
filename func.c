@@ -4,9 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "header.h"
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <sys/ttydefaults.h>
+#include <limits.h>
 void InitializeGameMap(char **map) {
 
     // k1 stands for kingdom1 and k2 for kingdom2
@@ -286,12 +284,70 @@ bool isValidMove(int x, int y, bool **visited, char **array, char player, int vi
     return true;
 }
 
+void FindPaths(char **array, int village[], int villageNum, char player) {
+    bool **visited = malloc(row * sizeof(bool *));
+    for (int i = 0; i < row; i++) {
+        visited[i] = calloc(col, sizeof(bool));
+    }
+
+    bool *villageVisited = calloc(villageNum / 2, sizeof(bool));  // Track visited villages
+    bool pathFound = false;  // Track if a valid path has been found for this player
+
+    int **path = malloc(row * col * sizeof(int *));  // Track the coordinates of the path
+    for (int i = 0; i < row * col; i++) {
+        path[i] = malloc(2 * sizeof(int));
+    }
+    int pathLength = 0, pathHardValue = 0;  // Track the length and the hard value of the path
+
+    int **shortestPath = malloc(row * col * sizeof(int *));  // Track the coordinates of the shortest path
+    for (int i = 0; i < row * col; i++) {
+        shortestPath[i] = malloc(2 * sizeof(int));
+    }
+    int shortestPathLength = 0;  // Track the length of the shortest path
+    int shortestPathHardValue = 0;  // Track the total hard value of the shortest path
+
+    // Start search only from player's kingdom
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            if (array[i][j] == player) {
+                dfs(array, i, j, visited, village, villageNum, &pathFound, player, villageVisited, &pathHardValue, path, &pathLength, shortestPath, &shortestPathLength, &shortestPathHardValue);
+            }
+        }
+    }
+
+    printf("Searching paths completed for player %c\n", player);
+    if (shortestPathLength > 0) {
+        printf("%sShortest path for %c with total hard value %d%s\n", Green, player, shortestPathHardValue, brightGreen);
+        printf("Path: ");
+        for (int i = 0; i < shortestPathLength; i++) {
+            printf("(%d, %d) ", shortestPath[i][0], shortestPath[i][1]);
+        }
+        printf("\n");
+    } else {
+        printf("No path found for player %c\n", player);
+    }
+
+    // Free allocated memory
+    for (int i = 0; i < row; i++) {
+        free(visited[i]);
+    }
+    free(visited);
+
+    for (int i = 0; i < row * col; i++) {
+        free(path[i]);
+        free(shortestPath[i]);
+    }
+    free(path);
+    free(shortestPath);
+    free(villageVisited);
+}
+
 void dfs(char **array, int x, int y, bool **visited, int village[], int villageCount, bool *pathFound, char player, bool *villageVisited, int *pathHardValue, int **path, int *pathLength, int **shortestPath, int *shortestPathLength, int *shortestPathHardValue) {
     visited[x][y] = true;
     path[*pathLength][0] = x;
     path[*pathLength][1] = y;
-    *pathHardValue += hardValues[x][y];
     (*pathLength)++;
+    *pathHardValue += hardValues[x][y];
 
     // Check if the current cell is a village
     for (int i = 0; i < villageCount; i += 2) {
@@ -324,38 +380,37 @@ void dfs(char **array, int x, int y, bool **visited, int village[], int villageC
     }
 
     int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-    
-    // Check all four directions for the presence of a village
+    int directionValues[4] = {INT_MAX, INT_MAX, INT_MAX, INT_MAX}; // Initialize with max values
+
+    // Evaluate hard values in all four directions
     for (int i = 0; i < 4; i++) {
         int newX = x + directions[i][0];
         int newY = y + directions[i][1];
 
-        // Check boundaries
-        if (newX < 0 || newY < 0 || newX >= row || newY >= col) {
-            continue;
+        // Check boundaries and avoid enemy cells
+        if (newX >= 0 && newY >= 0 && newX < row && newY < col && !visited[newX][newY] && array[newX][newY] != 'X' && array[newX][newY] != (player == 'F' ? 'S' : 'F')) {
+            directionValues[i] = hardValues[newX][newY];
         }
+    }
 
-        // Check if the cell is a village
-        for (int j = 0; j < villageCount * 2; j += 2) {
-            if (village[j] == newX && village[j + 1] == newY && !villageVisited[j / 2]) {
-                // Mark village as visited
-                villageVisited[j / 2] = true;
-                *pathFound = true;
+    // Sort directions based on hard values (ascending order)
+    for (int i = 0; i < 4; i++) {
+        for (int j = i + 1; j < 4; j++) {
+            if (directionValues[i] > directionValues[j]) {
+                int tempValue = directionValues[i];
+                directionValues[i] = directionValues[j];
+                directionValues[j] = tempValue;
 
-                // Check if this path is the shortest
-                if (*shortestPathLength == 0 || *pathLength < *shortestPathLength || (*pathLength == *shortestPathLength && *pathHardValue < *shortestPathHardValue)) {
-                    *shortestPathLength = *pathLength;
-                    *shortestPathHardValue = *pathHardValue;
-                    for (int k = 0; k < *pathLength; k++) {
-                        shortestPath[k][0] = path[k][0];
-                        shortestPath[k][1] = path[k][1];
-                    }
-                }
+                int tempDir[2] = {directions[i][0], directions[i][1]};
+                directions[i][0] = directions[j][0];
+                directions[i][1] = directions[j][1];
+                directions[j][0] = tempDir[0];
+                directions[j][1] = tempDir[1];
             }
         }
     }
 
-    // Proceed to explore further in all four directions
+    // Proceed to explore further in all four directions based on sorted hard values
     for (int i = 0; i < 4; i++) {
         int newX = x + directions[i][0];
         int newY = y + directions[i][1];
@@ -366,113 +421,116 @@ void dfs(char **array, int x, int y, bool **visited, int village[], int villageC
         }
 
         // Check if the cell is already visited or is an obstacle
-        if (visited[newX][newY] || array[newX][newY] == 'X') {
+        if (visited[newX][newY] || array[newX][newY] == 'X' || array[newX][newY] == (player == 'F' ? 'S' : 'F')) {
             continue;
         }
 
         // Recursively visit the next cell
         dfs(array, newX, newY, visited, village, villageCount, pathFound, player, villageVisited, pathHardValue, path, pathLength, shortestPath, shortestPathLength, shortestPathHardValue);
+
+        // Stop further exploration if the shortest path is found
+        if (*pathFound) {
+            break;
+        }
     }
 
     visited[x][y] = false;  // Backtrack
     (*pathLength)--;
     *pathHardValue -= hardValues[x][y];
-
 }
-/*
 
-
-
-    int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-    for (int i = 0; i < 4; i++) {
-        int newX = x + directions[i][0];
-        int newY = y + directions[i][1];
-
-        // Check boundaries
-        if (newX < 0 || newY < 0 || newX >= row || newY >= col) {
-            continue;
-        }
-
-        // Check if the cell is already visited or is an obstacle
-        if (visited[newX][newY] || array[newX][newY] == 'X') {
-            continue;
-        }
-
-        // Recursively visit the next cell
-        dfs(array, newX, newY, visited, village, villageCount, pathFound, player, villageVisited, pathHardValue, path, pathLength, shortestPath, shortestPathLength, shortestPathHardValue);
-    }
-
-    visited[x][y] = false;  // Backtrack
-    (*pathLength)--;
-    *pathHardValue -= hardValues[x][y];
-
-
-
-void dfs(char **array, int x, int y, bool **visited, int village[], int villageCount, bool *pathFound, char player, bool *villageVisited, int *pathHardValue, int **path, int *pathLength, int **shortestPath, int *shortestPathLength, int *shortestPathHardValue) {
+// DFS for finding all possible paths
+/*void dfs(char **array, int x, int y, bool **visited, int village[], int villageCount, bool *pathFound, char player, bool *villageVisited, int *pathHardValue, int **path, int *pathLength, int **shortestPath, int *shortestPathLength, int *shortestPathHardValue) {
     visited[x][y] = true;
     path[*pathLength][0] = x;
     path[*pathLength][1] = y;
     (*pathLength)++;
     *pathHardValue += hardValues[x][y];
 
-}
-*/
+    // Check if the current cell is a village
+    for (int i = 0; i < villageCount; i += 2) {
+        if (x == village[i] && y == village[i + 1] && !villageVisited[i / 2]) {
+            // Village found, print path details
+            printf("Path found for %c with total hard value %d\n", player, *pathHardValue);
+            printf("Path: ");
+            for (int j = 0; j < *pathLength; j++) {
+                printf("(%d, %d) ", path[j][0], path[j][1]);
+            }
+            printf("\n");
 
-void FindPaths(char **array, int village[], int villageNum, char player) {
-    bool **visited = malloc(row * sizeof(bool *));
-    for (int i = 0; i < row; i++) {
-        visited[i] = calloc(col, sizeof(bool));
+            // Check if this path is the shortest
+            if (*shortestPathLength == 0 || *pathLength < *shortestPathLength || (*pathLength == *shortestPathLength && *pathHardValue < *shortestPathHardValue)) {
+                *shortestPathLength = *pathLength;
+                *shortestPathHardValue = *pathHardValue;
+                for (int j = 0; j < *pathLength; j++) {
+                    shortestPath[j][0] = path[j][0];
+                    shortestPath[j][1] = path[j][1];
+                }
+            }
+
+            villageVisited[i / 2] = true;  // Mark village as visited
+            *pathFound = true;  // Mark path as found
+            visited[x][y] = false;  // Backtrack
+            (*pathLength)--;
+            *pathHardValue -= hardValues[x][y];
+            return;
+        }
     }
 
-    bool *villageVisited = calloc(villageNum / 2, sizeof(bool));  // Track visited villages
-    bool pathFound = false;  // Track if a valid path has been found for this player
-    int pathHardValue = 0;  // Track the total hard value of the path
-    int **path = malloc(row * col * sizeof(int *));  // Track the coordinates of the path
-    for (int i = 0; i < row * col; i++) {
-        path[i] = malloc(2 * sizeof(int));
-    }
-    int pathLength = 0;  // Track the length of the path
+    int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    int directionValues[4] = {INT_MAX, INT_MAX, INT_MAX, INT_MAX}; // Initialize with max values
 
-    int **shortestPath = malloc(row * col * sizeof(int *));  // Track the coordinates of the shortest path
-    for (int i = 0; i < row * col; i++) {
-        shortestPath[i] = malloc(2 * sizeof(int));
-    }
-    int shortestPathLength = 0;  // Track the length of the shortest path
-    int shortestPathHardValue = 0;  // Track the total hard value of the shortest path
+    // Evaluate hard values in all four directions
+    for (int i = 0; i < 4; i++) {
+        int newX = x + directions[i][0];
+        int newY = y + directions[i][1];
 
-    // Start search only from player's kingdom
-    for (int i = 0; i < row; i++) {
-        for (int j = 0; j < col; j++) {
-            if (array[i][j] == player) {
-                dfs(array, i, j, visited, village, villageNum, &pathFound, player, villageVisited, &pathHardValue, path, &pathLength, shortestPath, &shortestPathLength, &shortestPathHardValue);
+        // Check boundaries and avoid enemy cells
+        if (newX >= 0 && newY >= 0 && newX < row && newY < col && !visited[newX][newY] && array[newX][newY] != 'X' && array[newX][newY] != (player == 'F' ? 'S' : 'F')) {
+            directionValues[i] = hardValues[newX][newY];
+        }
+    }
+
+    // Sort directions based on hard values (ascending order)
+    for (int i = 0; i < 4; i++) {
+        for (int j = i + 1; j < 4; j++) {
+            if (directionValues[i] > directionValues[j]) {
+                int tempValue = directionValues[i];
+                directionValues[i] = directionValues[j];
+                directionValues[j] = tempValue;
+
+                int tempDir[2] = {directions[i][0], directions[i][1]};
+                directions[i][0] = directions[j][0];
+                directions[i][1] = directions[j][1];
+                directions[j][0] = tempDir[0];
+                directions[j][1] = tempDir[1];
             }
         }
     }
 
-    printf("Searching paths completed for player %c\n", player);
-    if (shortestPathLength > 0) {
-        printf("%sShortest path for %c with total hard value %d%s\n",Green, player, shortestPathHardValue, brightGreen);
-        printf("Path: ");
-        for (int i = 0; i < shortestPathLength; i++) {
-            printf("(%d, %d) ", shortestPath[i][0], shortestPath[i][1]);
+    // Proceed to explore further in all four directions based on sorted hard values
+    for (int i = 0; i < 4; i++) {
+        int newX = x + directions[i][0];
+        int newY = y + directions[i][1];
+
+        // Check boundaries
+        if (newX < 0 || newY < 0 || newX >= row || newY >= col) {
+            continue;
         }
-        printf("\n");
-    } else {
-        printf("No path found for player %c\n", player);
+
+        // Check if the cell is already visited or is an obstacle
+        if (visited[newX][newY] || array[newX][newY] == 'X' || array[newX][newY] == (player == 'F' ? 'S' : 'F')) {
+            continue;
+        }
+
+        // Recursively visit the next cell
+        dfs(array, newX, newY, visited, village, villageCount, pathFound, player, villageVisited, pathHardValue, path, pathLength, shortestPath, shortestPathLength, shortestPathHardValue);
     }
 
-    for (int i = 0; i < row; i++) {
-        free(visited[i]);
-    }
-    free(visited);
-    free(villageVisited);
-    for (int i = 0; i < row * col; i++) {
-        free(path[i]);
-        free(shortestPath[i]);
-    }
-    free(path);
-    free(shortestPath);
-}
+    visited[x][y] = false;  // Backtrack
+    (*pathLength)--;
+    *pathHardValue -= hardValues[x][y];
+}*/
 void XVcoordinates(char **array, int *HomeCoordinateArray,int *VillageCoordinateArray,int *HomeAmount,int *VillageAmount){
     // finding the Village Coordinates
     int HomeCurr =0, VillageCurr=0;
