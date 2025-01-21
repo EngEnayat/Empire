@@ -42,7 +42,7 @@ int main() {
     }
 
     // Call the functions
-    AssigningValue(array);
+    InitializeGameMap(array);
     GenerateRandom(array);
     printFunc(array);
 

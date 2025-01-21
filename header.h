@@ -15,7 +15,7 @@ struct player {
 };
 
 #define print_map printFunc(array);
-#define screen_clear  clrscr();
+#define screen_clear  printf("\033[H\033[J");
 #define blue "\033[1;34m"
 #define brightBlue "\033[0;34m"
 #define Green "\033[1;32m"
@@ -27,11 +27,10 @@ struct player {
 #define purple "\033[1;35m"
 #define reset "\033[0m"
 
-void AssigningValue(char **map);
+void InitializeGameMap(char **map);
 void GenerateRandom(char **array);
 void printFunc(char **array);
 void printBanner(const char* title);
-void clrscr();
 void info(struct player* func_Players);
 void Game_init(struct player* players, char **array, int village[], int villageNum);
 void print_property(struct player* players);
@@ -41,5 +40,19 @@ void dfs(char **array, int x, int y, bool **visited, int village[], int villageC
 void FindPaths(char **array, int village[], int villageNum, char player);
 void ExploreKingdom(char **array);
 void XVcoordinates(char **array, int *HomecoordinateArray,int *VillagecoordinateArray,int *HomeAmount,int *VillageAmount);
+// void getTerminalSize(int *rows, int *cols) ;
+// void moveCursor(int y, int x);
 
 #endif // PROJECT_HEADER_H
+
+
+/*
+5 5
+0 0 4 4
+2
+3 4 4 0
+5
+2 2 0 4 1 2 0 3 3 0
+
+
+*/

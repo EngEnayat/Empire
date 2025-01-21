@@ -4,43 +4,51 @@
 #include <stdbool.h>
 #include <string.h>
 #include "header.h"
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <sys/ttydefaults.h>
+void InitializeGameMap(char **map) {
 
-void AssigningValue(char **map) {
-    int k1, k2;
+    // k1 stands for kingdom1 and k2 for kingdom2
+    int kingdomx, kingdomy;
     printf("Enter the coordinates of kingdom one and two: ");
-    scanf("%d %d", &k1, &k2);
-    if(k1 >= row || k2 >=col){ 
-        printf("%sInvalid input%s!!!\n%sPROGRAM END.\n%s", red, reset, red, reset);
-        exit (0);
-    }else map[k1][k2] = 'F';
+    scanf("%d %d", &kingdomx, &kingdomy);
+    if(kingdomx >= row || kingdomy >=col || kingdomx <0 || kingdomy<0){ 
+        printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
+        InitializeGameMap(map);
+    }else map[kingdomx][kingdomy] = 'F';
     
-    scanf("%d %d", &k1, &k2);
-    if(k1 >= row || k2 >=col){ 
-        printf("%sInvalid input!!!%s\n%sPROGRAM END.\n%s", red, reset, red, reset);
-        exit (0);
-    }else map[k1][k2] = 'S';
-    printf("How many S_Village_flage are there: ");
-    int VN;
+    scanf("%d %d", &kingdomx, &kingdomy);
+    if(kingdomx >= row || kingdomy >=col || kingdomy<0 || kingdomx<0){ 
+        printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
+        InitializeGameMap(map);
+    }else map[kingdomx][kingdomy] = 'S';
+
+
+    printf("How many villages are there: ");
+    int VN; // village number
     scanf("%d", &VN);
     for (int i = 0; i < VN; i++) {
-        int v1, v2;
-        scanf("%d %d", &v1, &v2);
-        if(v1 >= row || v2 >= col){
-            printf("%sInvalid input!!!%s\n%sPROGRAM END.\n%s", red, reset, red, reset);
-            exit(0);
+        int Xvillage, Yvillage;
+        scanf("%d %d", &Xvillage, &Yvillage);
+        if(Xvillage >= row || Yvillage >= col || Xvillage <0 || Yvillage <0){
+        printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
+        InitializeGameMap(map);
         }
-        map[v1][v2] = 'V';
+        map[Xvillage][Yvillage] = 'V';
     }
 
+
     printf("How many banned homes are there: ");
-    int XN;
-    scanf("%d", &XN);
-    for (int i = 0; i < XN; i++) {
+    int xNumber; // homes number
+
+    scanf("%d", &xNumber);
+    for (int i = 0; i < xNumber; i++) {
         int x1, x2;
         scanf("%d %d", &x1, &x2);
         if(x1 >= row || x2 >= col){
-            printf("%sInvalid input!!!%s\n%sPROGRAM END.\n%s", red, reset, red, reset);
-            exit(0);
+        printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
+        InitializeGameMap(map);
         }
         map[x1][x2] = 'X';
     }
@@ -65,49 +73,97 @@ void GenerateRandom(char **array) {
     }
 }
 
-void printBanner(const char* title) {
-    printf("%s\n", blue);
-    printf("===========================================\n");
-    printf("|%s%20s%13s%s|\n", yellow, "", title, yellow);
-    printf("===========================================%s\n\n", reset);
+void printBanner(const char *message) {
+
+
+    // int x = (cols - strlen(message) * 2) / 2;
+    // int y = (rows - 3) / 2;
+
+    printf("%s*********************************%s\n", blue, reset);
+    printf("*                               *\n");
+    printf("*          %s%s%s  *\n", yellow, message,reset);
+    printf("%s*                               *%s\n", blue, reset);
+    printf("%s*********************************\n", blue);
+    printf("%s", reset);
+    printf("\n\n");
 }
 
+// // for cursor moving
+// void getTerminalSize(int *rows, int *cols) {
+//     #ifdef _WIN32
+//         CONSOLE_SCREEN_BUFFER_INFO csbi;
+//         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+//         *rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+//         *cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+//     #else
+//         struct winsize ws;
+//         ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+//         *rows = ws.ws_row;
+//         *cols = ws.ws_col;
+//     #endif
+// }
+
+// void moveCursor(int y, int x) {
+//     #ifdef _WIN32
+//         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+//         COORD position = {x, y};
+//         SetConsoleCursorPosition(hConsole, position);
+//     #else
+//         printf("\033[%d;%dH", y, x);
+//     #endif
+// }
+
 void printFunc(char **array) {
+    int rows, cols;
+    // getTerminalSize(&rows, &cols);
+
+    int x = (cols - col * 4) / 2;
+    int y = (rows - row * 2) / 2;
+
     printBanner("GRID DISPLAY");
+
+    printf("%s", blue);
+    printf("  +");
+    for (int i = 0; i < col; i++) {
+        printf("---+");
+    }
+    printf("\n");
+
     for (int i = 0; i < row; i++) {
-        printf("                  %s|%s", yellow, reset);
+        printf("  |");
         for (int j = 0; j < col; j++) {
             if (array[i][j] == 'X') {
-                printf(Green" %c "brightGreen, array[i][j]);
+                printf(" %sX%s |", Green, reset);
             } else if (array[i][j] == 'F' || array[i][j] == 'S') {
-                printf(purple" %c "yellow, array[i][j]);
+                printf(" %s%c%s |", purple, array[i][j], reset);
             } else if (array[i][j] == 'V') {
-                printf(blue" %c "reset, array[i][j]);
+                printf(" %sV%s |", blue, reset);
             } else {
-                printf(red" %c "reset, array[i][j]);
+                printf(" %s1%s |", red, reset);
             }
-            printf(" %s|%s", yellow, reset);
         }
         printf("\n");
+
         if (i != row - 1) {
-            printf("                  ");
-            for (int k = 0; k < (col * 6); k++) {
-                printf("-");
+            printf("  +");
+            for (int k = 0; k < col; k++) {
+                printf("---+");
             }
             printf("\n");
         }
     }
+
+    printf("%s", reset);
     printf("\n\n");
-}
-void clrscr() {
-    printf("\033[H\033[J"); // Move to the top-left corner and clear the entire screen
 }
 
 void info(struct player* func_Players){
-    printf("please enter the ratio of Gold, Food , Emoloyees and Soldiers: ");
-    int i=0;
-    scanf("%lf %lf %d %d", &func_Players[0].Gold, &func_Players[0].Food, &func_Players[0].employees, &func_Players[0].Soldier);
-    func_Players[1] = func_Players[0];
+    func_Players[0].employees = func_Players[1].employees = 1;
+    func_Players[0].Gold = func_Players[1].Gold = 5;
+    // printf("please enter the ratio of Gold, Food , Emoloyees and Soldiers: ");
+    // int i=0;
+    // scanf("%lf %lf %d %d", &func_Players[0].Gold, &func_Players[0].Food, &func_Players[0].employees, &func_Players[0].Soldier);
+    // func_Players[1] = func_Players[0];
 }
 void Game_init(struct player* players, char **array, int village[], int villageNum){
     int turn =0;
@@ -120,22 +176,21 @@ void Game_init(struct player* players, char **array, int village[], int villageN
         int choose;
         // screen_clear;
         // printFunc(array, row, col);
-        if(SW) printf("\n%sPlayer %d's Turn%s\n",purple, player+1 , purple);
-        printf("%splease choose an action: %s\n", yellow, yellow);
-        printf("%s1 : buying food\n2 : hiring employee\n3 : hiring soldiers\n4 : making paths: %s", white, brightBlue);
-
+        if(SW) printf("\n%sPlayer %d's Turn%s\n\n",purple, player+1 , purple);
+        printf("%s1 : buying food\n2 : hiring employee\n3 : hiring soldiers\n4 : making paths: \n5 for nothing: \n%s", blue, brightBlue);
+        printf("%splease choose an action: %s", yellow, yellow);
         if (scanf("%d", &choose) != 1) {
             // If input is not an integer
             screen_clear;
             print_map;
-            printf("%sInvalid input. Please enter a number between 1 and 4.%s\n", red, reset);
+            printf("%sInvalid input. Please enter a number between 1 and 5.%s\n", red, reset);
             SW =0;
             while (getchar() != '\n'); // Clear the input buffer
             continue;
         }
 
         // Check if the input is within the valid range
-        if (choose < 1 || choose > 4) {
+        if (choose < 1 || choose > 5) {
             screen_clear;
             print_map;
             printf("%sInvalid choice. Please select a valid option.%s\n", red, reset);
@@ -170,7 +225,7 @@ void Game_init(struct player* players, char **array, int village[], int villageN
             print_map;
             printf("%sYou have %.lf Food and can Hire up to %d employee, please enter your desire: %s",blue, players[turn].Food, (int)players[turn].Food /3, brightBlue);
             scanf("%d", &employee);
-            if(players[turn].Food >= employee && players[turn].Food >0)
+            if(players[turn].Food >= employee && players[turn].Food >3)
             {
                     players[turn].employees += employee;
                     players[turn].Food -= employee * 3;               
@@ -189,9 +244,9 @@ void Game_init(struct player* players, char **array, int village[], int villageN
             int soldier;
             screen_clear;
             print_map;
-            printf("%sYou have %.lf Gold and can hire up to %d soldiers, please enter the number of soldires you want to hire: %s",blue,players[turn].Gold, (int)players[turn].Gold/3, brightBlue);
+            printf("%sYou have %.lf Gold and can hire up to %d soldiers, please enter the number of soldires you want to hire: %s",blue,players[turn].Gold, (int)players[turn].Gold/2, brightBlue);
             scanf("%d", &soldier);
-            if(players[turn].Gold>= 2*soldier && players[turn].Gold > 3)
+            if(players[turn].Gold>= 2*soldier && players[turn].Gold > 2)
             {
                 players[turn].Gold -= soldier/2;
                 players[turn].Soldier += soldier;
@@ -213,14 +268,19 @@ void Game_init(struct player* players, char **array, int village[], int villageN
             
             continue;
         }
+        if(choose == 5)
+        {
+            screen_clear;
+            print_map;
+        }
         round++, SW++;
         if(round == 2){
             print_property(players);
             round =0;
             add_resourse(players);
         }
-        if(turn ==0) turn =1;
-        else if(turn ==1) turn =0;
+        // update the turn after each action
+        turn = (turn == 0)? 1: 0;
     }
 }
 void print_property(struct player* players)
@@ -297,37 +357,6 @@ void dfs(char **array, int x, int y, bool **visited, int village[], int villageC
     }
 
     int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-    for (int i = 0; i < 4; i++) {
-        int newX = x + directions[i][0];
-        int newY = y + directions[i][1];
-
-        // Check boundaries
-        if (newX < 0 || newY < 0 || newX >= row || newY >= col) {
-            continue;
-        }
-
-        // Check if the cell is already visited or is an obstacle
-        if (visited[newX][newY] || array[newX][newY] == 'X') {
-            continue;
-        }
-
-        // Recursively visit the next cell
-        dfs(array, newX, newY, visited, village, villageCount, pathFound, player, villageVisited, pathHardValue, path, pathLength, shortestPath, shortestPathLength, shortestPathHardValue);
-    }
-
-    visited[x][y] = false;  // Backtrack
-    (*pathLength)--;
-    *pathHardValue -= hardValues[x][y];
-}
-/*
-void dfs(char **array, int x, int y, bool **visited, int village[], int villageCount, bool *pathFound, char player, bool *villageVisited, int *pathHardValue, int **path, int *pathLength, int **shortestPath, int *shortestPathLength, int *shortestPathHardValue) {
-    visited[x][y] = true;
-    path[*pathLength][0] = x;
-    path[*pathLength][1] = y;
-    (*pathLength)++;
-    *pathHardValue += hardValues[x][y];
-
-    int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
     
     // Check all four directions for the presence of a village
     for (int i = 0; i < 4; i++) {
@@ -381,6 +410,44 @@ void dfs(char **array, int x, int y, bool **visited, int village[], int villageC
     visited[x][y] = false;  // Backtrack
     (*pathLength)--;
     *pathHardValue -= hardValues[x][y];
+
+}
+/*
+
+
+
+    int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    for (int i = 0; i < 4; i++) {
+        int newX = x + directions[i][0];
+        int newY = y + directions[i][1];
+
+        // Check boundaries
+        if (newX < 0 || newY < 0 || newX >= row || newY >= col) {
+            continue;
+        }
+
+        // Check if the cell is already visited or is an obstacle
+        if (visited[newX][newY] || array[newX][newY] == 'X') {
+            continue;
+        }
+
+        // Recursively visit the next cell
+        dfs(array, newX, newY, visited, village, villageCount, pathFound, player, villageVisited, pathHardValue, path, pathLength, shortestPath, shortestPathLength, shortestPathHardValue);
+    }
+
+    visited[x][y] = false;  // Backtrack
+    (*pathLength)--;
+    *pathHardValue -= hardValues[x][y];
+
+
+
+void dfs(char **array, int x, int y, bool **visited, int village[], int villageCount, bool *pathFound, char player, bool *villageVisited, int *pathHardValue, int **path, int *pathLength, int **shortestPath, int *shortestPathLength, int *shortestPathHardValue) {
+    visited[x][y] = true;
+    path[*pathLength][0] = x;
+    path[*pathLength][1] = y;
+    (*pathLength)++;
+    *pathHardValue += hardValues[x][y];
+
 }
 */
 
@@ -450,10 +517,6 @@ void XVcoordinates(char **array, int *HomeCoordinateArray,int *VillageCoordinate
             {
                 *(VillageCoordinateArray + VillageCurr) = i;
                 *(VillageCoordinateArray + VillageCurr+1) = j;
-                F_Village_flage[VillageCurr] = i;
-                F_Village_flage[VillageCurr+1] = j;
-                S_Village_flage[VillageCurr] = i;
-                S_Village_flage[VillageCurr+1] = j;
                 VillageCurr+=2;
                 // printf("%d", *VillageAmount);
             }
