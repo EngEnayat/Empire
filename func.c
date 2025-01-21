@@ -76,49 +76,16 @@ void GenerateRandom(char **array) {
 void printBanner(const char *message) {
 
 
-    // int x = (cols - strlen(message) * 2) / 2;
-    // int y = (rows - 3) / 2;
-
     printf("%s*********************************%s\n", blue, reset);
     printf("*                               *\n");
-    printf("*          %s%s%s  *\n", yellow, message,reset);
+    printf("*          %s%s%s         *\n", yellow, message,reset);
     printf("%s*                               *%s\n", blue, reset);
     printf("%s*********************************\n", blue);
     printf("%s", reset);
     printf("\n\n");
 }
 
-// // for cursor moving
-// void getTerminalSize(int *rows, int *cols) {
-//     #ifdef _WIN32
-//         CONSOLE_SCREEN_BUFFER_INFO csbi;
-//         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-//         *rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-//         *cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-//     #else
-//         struct winsize ws;
-//         ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
-//         *rows = ws.ws_row;
-//         *cols = ws.ws_col;
-//     #endif
-// }
-
-// void moveCursor(int y, int x) {
-//     #ifdef _WIN32
-//         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-//         COORD position = {x, y};
-//         SetConsoleCursorPosition(hConsole, position);
-//     #else
-//         printf("\033[%d;%dH", y, x);
-//     #endif
-// }
-
 void printFunc(char **array) {
-    int rows, cols;
-    // getTerminalSize(&rows, &cols);
-
-    int x = (cols - col * 4) / 2;
-    int y = (rows - row * 2) / 2;
 
     printBanner("GRID DISPLAY");
 
@@ -139,7 +106,7 @@ void printFunc(char **array) {
             } else if (array[i][j] == 'V') {
                 printf(" %sV%s |", blue, reset);
             } else {
-                printf(" %s1%s |", red, reset);
+                printf(" %s%c%s |", red,array[i][j], reset);
             }
         }
         printf("\n");
@@ -147,7 +114,7 @@ void printFunc(char **array) {
         if (i != row - 1) {
             printf("  +");
             for (int k = 0; k < col; k++) {
-                printf("---+");
+                printf("%s---+%s", yellow, reset);
             }
             printf("\n");
         }
