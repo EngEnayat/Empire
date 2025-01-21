@@ -1,11 +1,12 @@
 #ifndef PROJECT_HEADER_H
 #define PROJECT_HEADER_H
+
 extern int row, col;
 extern int sx,sy,fx,fy,path;
 // village x just store the S_Village_flage and also when a path found the village's coordinates will change
 extern int F_Village_flage[40],village_num, S_Village_flage[40];
 
-extern int HardValue[100];
+extern int **hardValues;
 struct player {
     double Gold;
     double Food;
@@ -27,7 +28,7 @@ struct player {
 #define reset "\033[0m"
 
 void AssigningValue(char **map);
-void GenerateRandom(char **array, int col);
+void GenerateRandom(char **array);
 void printFunc(char **array);
 void printBanner(const char* title);
 void clrscr();
@@ -36,8 +37,9 @@ void Game_init(struct player* players, char **array, int village[], int villageN
 void print_property(struct player* players);
 void add_resourse(struct player *players);
 bool isValidMove(int x, int y, bool **visited, char **array, char player, int village[], bool *villageVisited, int villageCount);
-void dfs(char **array, int x, int y, bool **visited, int village[], int villageCount, bool *PathFound, char player, bool *villageVisited);
+void dfs(char **array, int x, int y, bool **visited, int village[], int villageCount, bool *pathFound, char player, bool *villageVisited, int *pathHardValue, int **path, int *pathLength, int **shortestPath, int *shortestPathLength, int *shortestPathHardValue);
 void FindPaths(char **array, int village[], int villageNum, char player);
 void ExploreKingdom(char **array);
 void XVcoordinates(char **array, int *HomecoordinateArray,int *VillagecoordinateArray,int *HomeAmount,int *VillageAmount);
+
 #endif // PROJECT_HEADER_H
