@@ -1,5 +1,8 @@
-path/to/large/file
-*.c
-!main.c
-!func.c
-!header.c
+program.exe
+saeed.exe
+test.c
+window
+window.c
+hello.exe
+saeed
+saeed.c
