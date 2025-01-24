@@ -27,6 +27,10 @@ struct player {
 #define purple "\033[1;35m"
 #define reset "\033[0m"
 
+void AbsoluteFight(struct player* players);
+void PathFighting(char **array,struct player* players);
+void CheckFightState(char** array,int x,int y,char player, struct player* players);
+void gotoxy(int x, int y);
 void InitializeGameMap(char **map);
 void GenerateRandom(char **array);
 void printFunc(char **array);
@@ -54,5 +58,14 @@ void XVcoordinates(char **array, int *HomecoordinateArray,int *Villagecoordinate
 5
 2 2 0 4 1 2 0 3 3 0
 
+Please enter the map's coordinates (x, y): 17 17
+Enter the coordinates of kingdom one and two: 0 0 7 7
+How many villages are there: 7
+0 8 7 9 7 1 3 3 2 2 1 7 4 3
+How many banned homes are there: 15
+1 16 6 1 3 3 0 6 1 4 11 16 14 9 9 15 16 9 11 3 3 11 2 14
+3 6
+5 6
+5 8
 
 */

@@ -30,8 +30,8 @@ void InitializeGameMap(char **map) {
         int Xvillage, Yvillage;
         scanf("%d %d", &Xvillage, &Yvillage);
         if(Xvillage >= row || Yvillage >= col || Xvillage <0 || Yvillage <0){
-        printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
-        InitializeGameMap(map);
+            printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
+            InitializeGameMap(map);
         }
         map[Xvillage][Yvillage] = 'V';
     }
@@ -45,8 +45,8 @@ void InitializeGameMap(char **map) {
         int x1, x2;
         scanf("%d %d", &x1, &x2);
         if(x1 >= row || x2 >= col){
-        printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
-        InitializeGameMap(map);
+            printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
+            InitializeGameMap(map);
         }
         map[x1][x2] = 'X';
     }
@@ -57,6 +57,9 @@ void InitializeGameMap(char **map) {
     }
 }
 
+void gotoxy(int x, int y) {
+    printf("\033[%d;%dH", x, y);
+}
 void GenerateRandom(char **array) {
     srand(time(NULL));
     hardValues = malloc(row * sizeof(int *));
@@ -73,20 +76,22 @@ void GenerateRandom(char **array) {
 
 void printBanner(const char *message) {
 
-
+    gotoxy(1,60);
     printf("%s*********************************%s\n", blue, reset);
+    gotoxy(2,60);
     printf("*                               *\n");
+    gotoxy(3,60);
     printf("*          %s%s%s         *\n", yellow, message,reset);
+    gotoxy(4,60);
     printf("%s*                               *%s\n", blue, reset);
+    gotoxy(5,60);
     printf("%s*********************************\n", blue);
+    gotoxy(6,60);
     printf("%s", reset);
     printf("\n\n");
 }
-
 void printFunc(char **array) {
-
     printBanner("GRID DISPLAY");
-
     printf("%s", blue);
     printf("  +");
     for (int i = 0; i < col; i++) {
@@ -142,7 +147,7 @@ void Game_init(struct player* players, char **array, int village[], int villageN
         // screen_clear;
         // printFunc(array, row, col);
         if(SW) printf("\n%sPlayer %d's Turn%s\n\n",purple, player+1 , purple);
-        printf("%s1 : buying food\n2 : hiring employee\n3 : hiring soldiers\n4 : making paths: \n5 for nothing: \n%s", blue, brightBlue);
+        printf("%s1 : buying food\n2 : hiring employee\n3 : hiring soldiers\n4 : making paths: \n5 for starting fight if state available: \n%s", blue, brightBlue);
         printf("%splease choose an action: %s", yellow, yellow);
         if (scanf("%d", &choose) != 1) {
             // If input is not an integer
@@ -233,10 +238,13 @@ void Game_init(struct player* players, char **array, int village[], int villageN
             
             continue;
         }
-        if(choose == 5)
+        if(choose == 5) // I put 5 a sign for checking fight state but you replace in your code and it should check each round, may in the first in making map stage the kingdoms locate beside each other
         {
             screen_clear;
             print_map;
+            char Athlete = (player == 0)?'F':'S';
+            CheckFightState(array, 3, 4, Athlete, players);
+            getchar();
         }
         round++, SW++;
         if(round == 2){
@@ -247,6 +255,86 @@ void Game_init(struct player* players, char **array, int village[], int villageN
         // update the turn after each action
         turn = (turn == 0)? 1: 0;
     }
+}
+void AbsoluteFight(struct player* players)
+{
+    screen_clear;
+    if(players[0].Soldier > players[1].Soldier)
+    {
+        printf("%sCongratulations!!!\nPlayer One %s%c%s is Winner!%s", Green, blue, 'F',blue, Green);
+        printf("\nGame END!");
+        exit(0);
+    }
+    else if(players[1].Soldier > players[0].Soldier)
+    {
+        printf("%sCongratulations!!!\nPlayer two %s%c%s is Winner!%s", Green, blue, 'S',blue, Green);
+        printf("\nGame END!");
+        exit(0);
+    }
+    char winner = (players[0].Gold > players[1].Gold)? 'F' : 'S';
+    gotoxy(1, 60);
+    printf("%sCongratulations Player %c %s\n", Green,winner,Green);
+    gotoxy(2, 60);
+    printf("Hope you enjoy, GAME END!");
+    exit(0);
+
+}
+
+// first shape of function CheckFightState
+void CheckFightState(char** array,int x,int y,char player, struct player* players){
+    int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    char enemy = (player == 'F')? 'S' : 'F';
+    for(int i=0; i<4;i++)
+    {
+        int newX = x + directions[i][0];
+        int newY = y + directions[i][1];
+        if(newX >= 0 && newX < row && newY >= 0 && newY < col)
+        {
+            if(array[newX][newY] == enemy) // if it reaches into enemy kingdom
+            {
+                AbsoluteFight(players);
+            }
+            else if(array[newX][newY] == '=') // if there found an enemy path, consider '=' is the hard value of enemy paths that is shown in the map
+            {
+                
+                PathFighting(array, players); // subsidiary fight for making path beside enemy's road
+            }
+        }
+    }
+
+}
+void PathFighting(char **array,struct player* players)
+{
+    // F for player first and S for second player
+    char winner = (players[0].Soldier > players[1].Soldier)? 'F' : 'S';
+    if(winner == 'F')
+    {
+        for(int i=0; i< row;i++)
+        {
+            for(int j=0; j<col; j++)
+            {
+                if(array[i][j] == 0) // consider player two or S kigdom path's sign is 0, replace with real cahracter that you've chosen saeed
+                {
+                    array[i][j] = hardValues[i][j];
+                }
+            }
+        }
+        players[1].Soldier = players[0].Soldier - players[1].Soldier; // soldeirs dead
+    }
+    else
+    {
+        for(int i=0; i< row;i++)
+        {
+            for(int j=0; j<col; j++)
+            {
+                if(array[i][j] == 9) // consider player two path sign is 9, replace with real character on your own codes
+                {
+                    array[i][j] = hardValues[i][j];
+                }
+            }
+        }
+    }
+    players[0].Soldier = players[1].Soldier - players[0].Soldier;
 }
 void print_property(struct player* players)
 {
