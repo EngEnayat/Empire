@@ -11,10 +11,16 @@ int sx, sy, fx, fy;
 int F_Village_flage[40], village_num, S_Village_flage[40];
 int **hardValues;
 int path = 0;
-
+FILE *file = NULL;
 int main() {
-    printf("Please enter the map's coordinates (x, y): ");
-    scanf("%d %d", &row, &col);
+    file = fopen("info.txt", "r");
+    if(file == NULL)
+    {
+        printf("Failed to open file");
+        exit(0);
+    }
+    // printf("Please enter the map's coordinates (x, y): ");
+    fscanf(file, "%d %d", &row, &col);
     if (row > 17 || col > 17) {
         printf("%sMaximum 17x17!!%s\n%sPROGRAM END!%s\n", red, reset, red, reset);
         exit(0);
@@ -50,7 +56,7 @@ int main() {
     int VillageCoordinateArray[50], VillageAmount = 0;
     XVcoordinates(array, HomeCoordinateArray, VillageCoordinateArray, &HomeAmount, &VillageAmount);
     info(players);
-
+    getchar();
     // the players play by turn
     Game_init(players, array, VillageCoordinateArray, village_num);
 
@@ -66,6 +72,6 @@ int main() {
     free(hardValues);
 
     free(players);
-
+    fclose(file);
     return 0;
 }

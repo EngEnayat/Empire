@@ -5,6 +5,7 @@ extern int row, col;
 extern int sx,sy,fx,fy,path;
 // village x just store the S_Village_flage and also when a path found the village's coordinates will change
 extern int F_Village_flage[40],village_num, S_Village_flage[40];
+extern FILE *file;
 
 extern int **hardValues;
 struct player {

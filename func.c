@@ -6,47 +6,65 @@
 #include "header.h"
 #include <limits.h>
 void InitializeGameMap(char **map) {
-
     // k1 stands for kingdom1 and k2 for kingdom2
     int kingdomx, kingdomy;
-    printf("Enter the coordinates of kingdom one and two: ");
-    scanf("%d %d", &kingdomx, &kingdomy);
+    printf("Enter the coordinates of kingdom one: ");
+    getchar();
+    fscanf(file, "%d %d", &kingdomx, &kingdomy);
+    printf("you entered %d %d\n", kingdomx, kingdomy);
+    // scanf("%d %d", &kingdomx, &kingdomy);
+
     if(kingdomx >= row || kingdomy >=col || kingdomx <0 || kingdomy<0){ 
-        printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
-        InitializeGameMap(map);
+        printf("%sInvalid input!!!%s\n%sProgram end\n%s", red, reset, red, reset);
+        exit(0);
     }else map[kingdomx][kingdomy] = 'F';
-    
-    scanf("%d %d", &kingdomx, &kingdomy);
+    printf("Enter the coordinates of kingdom two: ");
+    getchar();
+    // scanf("%d %d", &kingdomx, &kingdomy);
+    fscanf(file, "%d %d", &kingdomx, &kingdomy);
+    printf("you entered %d %d\n", kingdomx, kingdomy);
     if(kingdomx >= row || kingdomy >=col || kingdomy<0 || kingdomx<0){ 
-        printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
-        InitializeGameMap(map);
+        printf("%sInvalid input!!!%s\n%sPROGRAM END.\n%s", red, reset, red, reset);
+        exit(0);
     }else map[kingdomx][kingdomy] = 'S';
 
-
     printf("How many villages are there: ");
+    getchar();
     int VN; // village number
-    scanf("%d", &VN);
+    fscanf(file, "%d", &VN);
+    printf("you entered %d\n", VN);
+    // scanf("%d", &VN);
     for (int i = 0; i < VN; i++) {
         int Xvillage, Yvillage;
-        scanf("%d %d", &Xvillage, &Yvillage);
+        printf("enter the coordinated of village x and y");
+        getchar();
+        fscanf(file, "%d %d",&Xvillage, &Yvillage);
+        printf("you entered %d %d\n", Xvillage, Yvillage);
+        // scanf("%d %d", &Xvillage, &Yvillage);
         if(Xvillage >= row || Yvillage >= col || Xvillage <0 || Yvillage <0){
-            printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
-            InitializeGameMap(map);
+            printf("%sInvalid input!!!%s\n%sPROGRAM END.\n%s", red, reset, red, reset);
+            exit(0);
         }
         map[Xvillage][Yvillage] = 'V';
     }
 
 
     printf("How many banned homes are there: ");
+    getchar();
     int xNumber; // homes number
-
-    scanf("%d", &xNumber);
+    fscanf(file, "%d", &xNumber);
+    printf("you entered %d\n", xNumber);
+    // scanf("%d", &xNumber);
     for (int i = 0; i < xNumber; i++) {
         int x1, x2;
-        scanf("%d %d", &x1, &x2);
+        printf("enter the coordinates of x and y homes: ");
+        getchar();
+        fscanf(file, "%d %d", &x1, &x2);
+        printf("you entered %d %d\n", x1, x2);
+        // scanf("%d %d", &x1, &x2);
         if(x1 >= row || x2 >= col){
-            printf("%sInvalid input!!!%s\n%sPLEASE TRY AGAIN.\n%s", red, reset, red, reset);
-            InitializeGameMap(map);
+            printf("%sInvalid input!!!%s\n%sPROGRAM END.\n%s", red, reset, red, reset);
+            exit(0);
         }
         map[x1][x2] = 'X';
     }
@@ -137,27 +155,24 @@ void info(struct player* func_Players){
 }
 void Game_init(struct player* players, char **array, int village[], int villageNum){
     int turn =0;
-    screen_clear;
-    print_map;
+    //screen_clear;
+    //print_map;
     int round =0, SW=1;
     while(true){
         // the user one turn
         int player = turn;
         int choose;
-        // screen_clear;
-        // printFunc(array, row, col);
+        screen_clear;
+        print_map;
         if(SW) printf("\n%sPlayer %d's Turn%s\n\n",purple, player+1 , purple);
         printf("%s1 : buying food\n2 : hiring employee\n3 : hiring soldiers\n4 : making paths: \n5 for starting fight if state available: \n%s", blue, brightBlue);
         printf("%splease choose an action: %s", yellow, yellow);
-        if (scanf("%d", &choose) != 1) {
-            // If input is not an integer
-            screen_clear;
-            print_map;
-            printf("%sInvalid input. Please enter a number between 1 and 5.%s\n", red, reset);
-            SW =0;
-            while (getchar() != '\n'); // Clear the input buffer
-            continue;
-        }
+        // scanf("%d", &choose);
+        getchar();
+        fscanf(file, "%d", &choose);
+        printf("you entered %d", choose);
+        getchar();
+
 
         // Check if the input is within the valid range
         if (choose < 1 || choose > 5) {
@@ -173,7 +188,9 @@ void Game_init(struct player* players, char **array, int village[], int villageN
             print_map;
             printf ("%syou have %.lf Gold and can buy food up to %.lf, please enter the food you desire: %s",blue, players[turn].Gold, players[turn].Gold, brightBlue);
             double food;
-            scanf("%lf", &food);
+            // scanf("%lf", &food);
+            getchar();
+            fscanf(file, "%lf", &food);
             if(players[turn].Gold>=1 && players[turn].Gold >=food){
                 players[turn].Gold -= food;
                 players[turn].Food += food;
@@ -193,8 +210,10 @@ void Game_init(struct player* players, char **array, int village[], int villageN
             int employee;
             screen_clear;
             print_map;
+            getchar();
             printf("%sYou have %.lf Food and can Hire up to %d employee, please enter your desire: %s",blue, players[turn].Food, (int)players[turn].Food /3, brightBlue);
-            scanf("%d", &employee);
+            // scanf("%d", &employee);
+            fscanf(file, "%d", &employee);
             if(players[turn].Food >= employee && players[turn].Food >3)
             {
                     players[turn].employees += employee;
@@ -215,7 +234,9 @@ void Game_init(struct player* players, char **array, int village[], int villageN
             screen_clear;
             print_map;
             printf("%sYou have %.lf Gold and can hire up to %d soldiers, please enter the number of soldires you want to hire: %s",blue,players[turn].Gold, (int)players[turn].Gold/2, brightBlue);
-            scanf("%d", &soldier);
+            // scanf("%d", &soldier);
+            getchar();
+            fscanf(file, "%d", &soldier);
             if(players[turn].Gold>= 2*soldier && players[turn].Gold > 2)
             {
                 players[turn].Gold -= soldier/2;
