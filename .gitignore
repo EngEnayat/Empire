@@ -1,1 +1,5 @@
 path/to/large/file
+*.c
+!main.c
+!func.c
+!header.c
