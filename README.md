@@ -84,11 +84,16 @@ cd fop-2025-final-project
 
 Compile the source code:
 
-gcc -o game main.c
+gcc -o final FinalEmpirePro.c
 
 Run the game:
 
-./game
+./final
+
+-- or --
+execute manullay using this command on linux 
+
+wine FinalEmpire.exe
 
 Contributions
 
